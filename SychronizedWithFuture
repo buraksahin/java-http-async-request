@@ -1,0 +1,63 @@
+import javax.net.ssl.HttpsURLConnection;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Date;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+public class SychronizedWithFuture {
+    static int i = 0;
+    public static void main(String ... args) throws InterruptedException {
+
+        Long start = System.currentTimeMillis();
+
+        SychronizedWithFuture s = new SychronizedWithFuture();
+
+        ExecutorService threadpool = Executors.newCachedThreadPool();
+        Future<String> futureTask = threadpool.submit(() -> s.request("https://www.google.com.tr"));
+
+        while (!futureTask.isDone()) {
+            System.out.println("Elapse time: " + (System.currentTimeMillis() - start));
+        }
+
+        try {
+            String result = futureTask.get();
+            System.out.println(result);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        threadpool.shutdown();
+    }
+
+    public String request(String address){
+        String result = "";
+        String httpsURL = address;
+        URL url = null;
+        try {
+            url = new URL(httpsURL);
+            HttpsURLConnection httpsURLConnection = (HttpsURLConnection)url.openConnection();
+            InputStream inputStream = httpsURLConnection.getInputStream();
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            String inputLine;
+            while ((inputLine = bufferedReader.readLine()) != null) {
+                result = result + inputLine;
+            }
+            bufferedReader.close();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        i = 1;
+        return result;
+    }
+}

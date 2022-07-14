@@ -1,0 +1,51 @@
+import javax.net.ssl.HttpsURLConnection;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Date;
+import java.util.concurrent.Future;
+
+public class SychronizedWork {
+    static int i = 0;
+    public static void main(String ... args) throws InterruptedException {
+
+        Long startTime = System.currentTimeMillis();
+
+        Thread newThread = new Thread(() -> {
+            SychronizedWork s = new SychronizedWork();
+            s.request("https://www.google.com.tr");
+        });
+        newThread.start();
+
+        while(i == 0){
+            System.out.format("elapsed: %d\n", System.currentTimeMillis() - startTime);
+        }
+        System.out.format("Total elapsed time: %d\n", System.currentTimeMillis() - startTime);
+    }
+
+    public void request(String address){
+        String httpsURL = address;
+        URL url = null;
+        try {
+            url = new URL(httpsURL);
+            HttpsURLConnection httpsURLConnection = (HttpsURLConnection)url.openConnection();
+            InputStream inputStream = httpsURLConnection.getInputStream();
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            String inputLine;
+            while ((inputLine = bufferedReader.readLine()) != null) {
+                System.out.println(inputLine);
+            }
+            bufferedReader.close();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        i = 1;
+    }
+}
